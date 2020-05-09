@@ -10,6 +10,6 @@ object Repository {
     def getAll: ZIO[Any, Throwable, Seq[Model]]
     def putFailOnIds(ids: Seq[Int]): ZIO[Any, Throwable, Unit]
     def delete(id: String): ZIO[Any, Throwable, Unit]
-    def getFailOnIds: ZIO[Any, Throwable, Seq[Int]]
+    def get(id: String): ZIO[Any, Throwable, Seq[Int]]
   }
 }

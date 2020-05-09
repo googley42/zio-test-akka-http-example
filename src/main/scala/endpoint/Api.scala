@@ -20,7 +20,7 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
       entity(as[Model]) { msg =>
         val putM =
           for {
-            failOnIds <- ZIO.accessM[Repository](_.get.getFailOnIds)
+            failOnIds <- ZIO.accessM[Repository](_.get.get("todo"))
             resp <- if (failOnIds.contains(msg.id))
               ZIO.fail(new RuntimeException("BOOM!"))
             else
@@ -35,7 +35,7 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
   private lazy val report: Route = get {
     val recordsM: ZIO[Repository, Throwable, EndpointReport] = for {
       records <- ZIO.accessM[Repository](_.get.getAll)
-      failOnIds <- ZIO.accessM[Repository](_.get.getFailOnIds)
+      failOnIds <- ZIO.accessM[Repository](_.get.get("todo"))
     } yield EndpointReport(records, failOnIds)
 
     path("get") {
@@ -68,7 +68,7 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   private lazy val getFailOnIds: Route = get {
     val recordsM: ZIO[Repository, Throwable, Seq[Int]] = for {
-      records <- ZIO.accessM[Repository](_.get.getFailOnIds)
+      records <- ZIO.accessM[Repository](_.get.get("todo"))
     } yield records
 
     path("getFailOnIds") {
