@@ -7,9 +7,7 @@ import zio.console.Console
 object InMemoryRepository {
 
   def inMemory(
-    refMap: Ref[Map[String, Model]],
-    refDb: Ref[Vector[Model]],
-    refFailOnIdList: Ref[Vector[Int]]
+    refMap: Ref[Map[String, Model]]
   ) = ZLayer.fromService[Console.Service, Repository.Service] { console =>
     new Repository.Service {
       override def put(model: Model): ZIO[Any, Throwable, Unit] =
