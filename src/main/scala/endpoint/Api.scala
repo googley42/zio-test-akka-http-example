@@ -7,6 +7,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoint.model.Model
 import io.circe.Printer
 import zio.{Runtime, ZIO}
+import zio.console._
 
 class Api(r: Runtime[Repository]) extends ZioSupport(r) {
   import FailFastCirceSupport._
@@ -18,20 +19,26 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   private lazy val putModel: Route = put {
     path("put") {
-      entity(as[Model]) { msg =>
+      entity(as[Model]) { model =>
         val putM =
           for {
-            failOnIds <- ZIO.accessM[Repository](_.get.get("todo"))
-            resp <- if (failOnIds.contains(msg.id))
-              ZIO.fail(new RuntimeException("BOOM!"))
-            else
-              ZIO.accessM[Repository](_.get.put(msg))
-          } yield resp
+            maybeExistsAlready <- ZIO.accessM[Repository](_.get.get(model.id))
+//            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready")) // TODO - some logging
+            _ <- ZIO.accessM[Repository](_.get.put(model))
+          } yield ()
 
-        putM.fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $msg"))
+        putM.fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $model"))
       }
     }
   }
+
+  private def putModel(invoice: Model): ZIO[Repository, StatusCode, Unit] =
+    for {
+      repo <- ZIO.access[Repository](_.get)
+      result <- repo
+        .put(invoice)
+        .orElseFail(StatusCodes.InternalServerError)
+    } yield result
 
   private lazy val getModel: Route = pathPrefix("get") {
     get {
