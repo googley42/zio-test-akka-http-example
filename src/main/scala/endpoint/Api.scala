@@ -1,5 +1,6 @@
 package endpoint
 
+import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
@@ -32,15 +33,25 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
     }
   }
 
-  private lazy val getModel: Route = get {
-    val recordsM: ZIO[Repository, Throwable, Option[Model]] = for {
-      maybeModel <- ZIO.accessM[Repository](_.get.get("todo"))
-    } yield maybeModel
-
-    path("get") {
-      recordsM.fold(failureStatus => complete(failureStatus), records => complete(records))
+  private lazy val getModel: Route = pathPrefix("get") {
+    get {
+      pathPrefix(Segment) { id =>
+        pathEnd {
+          getModel(id)
+            .fold(failureStatus => complete(failureStatus), model => complete(model))
+        }
+      }
     }
   }
+
+  private def getModel(id: String): ZIO[Repository, StatusCode, Model] =
+    for {
+      repo <- ZIO.access[Repository](_.get)
+      findResult <- repo
+        .get(id)
+        .orElseFail(StatusCodes.InternalServerError)
+        .someOrFail(StatusCodes.NotFound)
+    } yield findResult
 
   private lazy val deleteModel: Route = delete {
     val deleteM: ZIO[Repository, Throwable, Unit] = for {

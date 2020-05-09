@@ -1,17 +1,14 @@
 package endpoint
 
-import akka.http.scaladsl.model.{HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.Directives.complete
-import endpoint.Main.layer
+import akka.http.scaladsl.model.StatusCodes
+import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoint.model.Model
 import zio.console.Console
-import zio.{IO, Ref, Runtime, UIO, ULayer, URIO, ZIO}
 import zio.test.Assertion._
-import zio.test.akkahttp.{DefaultAkkaRunnableSpec, RouteTest, RouteTestResult}
-import zio.test.{assert, assertM, suite, testM, Assertion}
-import RepositoryMock._
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
+import zio.test.akkahttp.DefaultAkkaRunnableSpec
 import zio.test.mock.Expectation._
+import zio.test._
+import zio.{Ref, Runtime, ULayer, ZIO}
 
 object ApiSpec extends DefaultAkkaRunnableSpec {
   import FailFastCirceSupport._
@@ -19,13 +16,13 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 
   override def spec =
     suite("ApiSpec")(
-      testM("get should return OK") {
+      testM("get should return OK using assertM") {
 
         val result = for {
-          refMap <- Ref.make[Map[String, Model]](Map.empty)
+          refMap <- Ref.make[Map[String, Model]](Map.empty + ("1" -> Model("1")))
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
-          result <- Get("/get") ~> api.routes
+          result <- Get("/get/1") ~> api.routes
         } yield result
 
         assertM(result)(
@@ -34,24 +31,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         )
       },
-      testM("get should return OK") {
+      testM("get should return OK using assert") {
         for {
-          refMap <- Ref.make[Map[String, Model]](Map.empty)
+          refMap <- Ref.make[Map[String, Model]](Map.empty + ("1" -> Model("1")))
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
-          result <- Get("/get") ~> api.routes
-        } yield assert(result)(
-          handled(
-            status(equalTo(StatusCodes.OK))
-          )
-        )
-      },
-      testM("get should return OK with assertM") {
-        for {
-          refMap <- Ref.make[Map[String, Model]](Map.empty)
-          layer = Console.live >>> InMemoryRepository.inMemory(refMap)
-          api = new Api(Runtime.unsafeFromLayer(layer))
-          result <- Get("/get") ~> api.routes
+          result <- Get("/get/1") ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
@@ -59,11 +44,8 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         )
       },
       testM("put using in memory repo") {
-//        val x: IO[Nothing, Unit] = IO.unit
-//        val repo = RepositoryMock.Put(equalTo(TestMsg(1))) returns unit
         for {
           refMap <- Ref.make[Map[String, Model]](Map.empty)
-//          api = new Api(Runtime.unsafeFromLayer(repo))
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Put("/put", Model("1")) ~> api.routes
