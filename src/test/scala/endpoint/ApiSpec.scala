@@ -22,9 +22,10 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("get should return OK") {
 
         val result = for {
+          refMap <- Ref.make[Map[String, Model]](Map.empty)
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
           refFailOnIdList <- Ref.make[Vector[Int]](Vector.empty)
-          layer = Console.live >>> InMemoryRepository.inMemory(refRecords, refFailOnIdList)
+          layer = Console.live >>> InMemoryRepository.inMemory(refMap, refRecords, refFailOnIdList)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/get") ~> api.routes
         } yield result
@@ -37,9 +38,10 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       },
       testM("get should return OK") {
         for {
+          refMap <- Ref.make[Map[String, Model]](Map.empty)
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
           refFailOnIdList <- Ref.make[Vector[Int]](Vector.empty)
-          layer = Console.live >>> InMemoryRepository.inMemory(refRecords, refFailOnIdList)
+          layer = Console.live >>> InMemoryRepository.inMemory(refMap, refRecords, refFailOnIdList)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/get") ~> api.routes
         } yield assert(result)(
@@ -50,9 +52,10 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       },
       testM("get should return OK with assertM") {
         for {
+          refMap <- Ref.make[Map[String, Model]](Map.empty)
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
           refFailOnIdList <- Ref.make[Vector[Int]](Vector.empty)
-          layer = Console.live >>> InMemoryRepository.inMemory(refRecords, refFailOnIdList)
+          layer = Console.live >>> InMemoryRepository.inMemory(refMap, refRecords, refFailOnIdList)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/get") ~> api.routes
         } yield assert(result)(
@@ -65,10 +68,11 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 //        val x: IO[Nothing, Unit] = IO.unit
 //        val repo = RepositoryMock.Put(equalTo(TestMsg(1))) returns unit
         for {
+          refMap <- Ref.make[Map[String, Model]](Map.empty)
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
           refFailOnIdList <- Ref.make[Vector[Int]](Vector.empty)
 //          api = new Api(Runtime.unsafeFromLayer(repo))
-          layer = Console.live >>> InMemoryRepository.inMemory(refRecords, refFailOnIdList)
+          layer = Console.live >>> InMemoryRepository.inMemory(refMap, refRecords, refFailOnIdList)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Put("/put", Model("1")) ~> api.routes
         } yield assert(result)(

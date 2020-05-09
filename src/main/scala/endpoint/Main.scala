@@ -20,9 +20,10 @@ object Main extends App {
       implicit val mat: ActorMaterializer = ActorMaterializer()
       implicit val ec: ExecutionContext = platform.executor.asEC
       for {
+        refMap <- Ref.make[Map[String, Model]](Map.empty)
         refRecords <- Ref.make[Vector[Model]](Vector.empty)
         refFailOnIdList <- Ref.make[Vector[Int]](Vector.empty)
-        api = new Api(Runtime.unsafeFromLayer(layer(refRecords, refFailOnIdList)))
+        api = new Api(Runtime.unsafeFromLayer(layer(refMap, refRecords, refFailOnIdList)))
         server <- ZIO.fromFuture(_ => Http().bindAndHandle(api.routes, "localhost", 8000))
       } yield server
     }
@@ -34,7 +35,7 @@ object Main extends App {
       exitCode <- httpServer.useForever.as(0)
     } yield exitCode).orDie
 
-  private def layer(refDb: Ref[Vector[Model]], refFailOnIdList: Ref[Vector[Int]]) =
-    Console.live >>> InMemoryRepository.inMemory(refDb, refFailOnIdList)
+  private def layer(refMap: Ref[Map[String, Model]], refDb: Ref[Vector[Model]], refFailOnIdList: Ref[Vector[Int]]) =
+    Console.live >>> InMemoryRepository.inMemory(refMap, refDb, refFailOnIdList)
 
 }
