@@ -8,7 +8,6 @@ object Repository {
   trait Service {
     def put(testMsg: Model): ZIO[Any, Throwable, Unit]
     def getAll: ZIO[Any, Throwable, Seq[Model]]
-    def putFailOnIds(ids: Seq[Int]): ZIO[Any, Throwable, Unit]
     def delete(id: String): ZIO[Any, Throwable, Unit]
     def get(id: String): ZIO[Any, Throwable, Seq[Int]]
   }

@@ -13,7 +13,7 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   private implicit val printer: Printer = Printer.noSpaces.copy(dropNullValues = true)
 
-  lazy val routes: Route = send ~ report ~ deleteFailOnIds ~ putFailOnIds ~ getFailOnIds
+  lazy val routes: Route = send ~ report ~ deleteFailOnIds ~ getFailOnIds
 
   private lazy val send: Route = put {
     path("put") {
@@ -40,19 +40,6 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
     path("get") {
       recordsM.fold(failureStatus => complete(failureStatus), records => complete(records))
-    }
-  }
-
-  private lazy val putFailOnIds: Route = put {
-    path("putFailOnIds") {
-      entity(as[Seq[Int]]) { failOnIds =>
-        val putM =
-          for {
-            _ <- ZIO.accessM[Repository](_.get.putFailOnIds(failOnIds))
-          } yield ()
-
-        putM.fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $failOnIds"))
-      }
     }
   }
 

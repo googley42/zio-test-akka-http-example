@@ -18,9 +18,6 @@ object InMemoryRepository {
 
       override def getAll: ZIO[Any, Throwable, Seq[Model]] = refMap.get.map(_.values.toSeq)
 
-      override def putFailOnIds(ids: Seq[Int]): ZIO[Any, Throwable, Unit] =
-        refFailOnIdList.update(vector => vector ++ ids).unit
-
       override def delete(id: String): ZIO[Any, Throwable, Unit] =
         console.putStrLn(s"deleting record $id") *> refMap.update(_ - id)
 
