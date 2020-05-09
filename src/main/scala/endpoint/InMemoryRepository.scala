@@ -16,7 +16,7 @@ object InMemoryRepository {
         console.putStrLn(s"putting record $model") *> //TODO: use logging
           refMap.update(map => map + (model.id -> model))
 
-      override def getAll: ZIO[Any, Throwable, Seq[Model]] = refDb.get
+      override def getAll: ZIO[Any, Throwable, Seq[Model]] = refMap.get.map(_.values.toSeq)
 
       override def putFailOnIds(ids: Seq[Int]): ZIO[Any, Throwable, Unit] =
         refFailOnIdList.update(vector => vector ++ ids).unit
