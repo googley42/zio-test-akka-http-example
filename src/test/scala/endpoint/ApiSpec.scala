@@ -70,7 +70,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 //          api = new Api(Runtime.unsafeFromLayer(repo))
           layer = Console.live >>> InMemoryRepository.inMemory(refRecords, refFailOnIdList)
           api = new Api(Runtime.unsafeFromLayer(layer))
-          result <- Put("/put", Model(1)) ~> api.routes
+          result <- Put("/put", Model("1")) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
@@ -79,12 +79,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       },
       testM("put using mocked repo") {
         val x: ULayer[Repository] = (RepositoryMock.GetFailOnIds returns value(Vector.empty[Int])) andThen
-          (RepositoryMock.Put(equalTo(Model(1))) returns unit)
+          (RepositoryMock.Put(equalTo(Model("1"))) returns unit)
         for {
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
           refFailOnIdList <- Ref.make[Vector[Int]](Vector.empty)
           api = new Api(Runtime.unsafeFromLayer(x))
-          result <- Put("/put", Model(1)) ~> api.routes
+          result <- Put("/put", Model("1")) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
@@ -101,7 +101,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
           refFailOnIdList <- Ref.make[Vector[Int]](Vector.empty)
           api = new Api(Runtime.unsafeFromLayer(x))
-          result <- Put("/put", Model(1)) ~> api.routes
+          result <- Put("/put", Model("1")) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))

@@ -8,7 +8,8 @@ object InMemoryRepository {
 
   def inMemory(
     refDb: Ref[Vector[Model]],
-    refFailOnIdList: Ref[Vector[Int]]
+    refFailOnIdList: Ref[Vector[Int]],
+    refMap: Ref[Map[String, Model]] = null
   ) = ZLayer.fromService[Console.Service, Repository.Service] { console =>
     new Repository.Service {
       override def put(testMsg: Model): ZIO[Any, Throwable, Unit] =
