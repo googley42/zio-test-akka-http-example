@@ -53,11 +53,11 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
   }
 
   private lazy val getAll: Route = get {
-    val recordsM: ZIO[Repository, Throwable, Option[Model]] = for {
-      records <- ZIO.accessM[Repository](_.get.get("todo"))
+    val recordsM: ZIO[Repository, Throwable, Seq[Model]] = for {
+      records <- ZIO.accessM[Repository](_.get.getAll)
     } yield records
 
-    path("getFailOnIds") {
+    path("getAll") {
       recordsM.fold(failureStatus => complete(failureStatus), records => complete(records))
     }
   }
