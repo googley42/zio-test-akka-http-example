@@ -12,11 +12,9 @@ object InMemoryRepository {
     refFailOnIdList: Ref[Vector[Int]]
   ) = ZLayer.fromService[Console.Service, Repository.Service] { console =>
     new Repository.Service {
-      override def put(testMsg: Model): ZIO[Any, Throwable, Unit] =
-        for {
-          _ <- console.putStrLn(s"putting record $testMsg") //TODO: use logging
-          _ <- refDb.update(vector => vector :+ testMsg)
-        } yield ()
+      override def put(model: Model): ZIO[Any, Throwable, Unit] =
+        console.putStrLn(s"putting record $model") *> //TODO: use logging
+          refMap.update(map => map + (model.id -> model))
 
       override def getAll: ZIO[Any, Throwable, Seq[Model]] = refDb.get
 
