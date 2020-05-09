@@ -58,7 +58,7 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   private lazy val deleteFailOnIds: Route = delete {
     val deleteM: ZIO[Repository, Throwable, Unit] = for {
-      _ <- ZIO.accessM[Repository](_.get.deleteFailOnIds())
+      _ <- ZIO.accessM[Repository](_.get.delete("todo"))
     } yield ()
 
     path("deleteFailOnIds") {
