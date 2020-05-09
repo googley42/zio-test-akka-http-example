@@ -21,8 +21,7 @@ object InMemoryRepository {
       override def delete(id: String): ZIO[Any, Throwable, Unit] =
         console.putStrLn(s"deleting record $id") *> refMap.update(_ - id)
 
-      override def get(id: String): ZIO[Any, Throwable, Seq[Int]] = refFailOnIdList.get
-
+      override def get(id: String): ZIO[Any, Throwable, Option[Model]] = refMap.get.map(_.get(id))
     }
   }
 

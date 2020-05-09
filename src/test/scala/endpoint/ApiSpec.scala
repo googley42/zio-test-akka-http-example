@@ -82,7 +82,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         )
       },
       testM("put using mocked repo") {
-        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo("todo")) returns value(Vector.empty[Int])) andThen
+        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo("todo")) returns value(Some(Model("todo")))) andThen
           (RepositoryMock.Put(equalTo(Model("1"))) returns unit)
         for {
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
@@ -99,7 +99,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         def any[T]: Assertion[T] =
           Assertion.assertion("any")()(_ => true)
 
-        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo("todo")) returns value(Vector.empty[Int])) andThen
+        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo("todo")) returns value(Some(Model("todo")))) andThen
           (RepositoryMock.Put(any[Model]) returns unit)
         for {
           refRecords <- Ref.make[Vector[Model]](Vector.empty)
