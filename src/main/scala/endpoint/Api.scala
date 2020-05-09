@@ -64,11 +64,3 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
   }
 
 }
-
-case class EndpointReport(totalCount: Int, distinctCount: Int, failOnIds: Seq[Int])
-
-object EndpointReport {
-
-  def apply(records: Seq[Model], failOnIds: Seq[Int]): EndpointReport =
-    EndpointReport(records.size, records.distinct.size, failOnIds)
-}
