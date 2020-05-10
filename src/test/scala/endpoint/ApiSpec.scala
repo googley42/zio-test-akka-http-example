@@ -32,7 +32,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         assertM(result)(
           handled(
             status(equalTo(StatusCodes.OK))
-              && entityAs[Seq[Model]](equalTo(Right(Seq(Model(IdOne)))))
+              && entityAs[Seq[Model]](isRight(equalTo(Seq(Model(IdOne)))))
           )
         )
       },
@@ -48,23 +48,22 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         assertM(result)(
           handled(
             status(equalTo(StatusCodes.OK))
-              && entityAs[Model](equalTo(Right(Model(IdOne))))
+              && entityAs[Model](isRight(equalTo(Model(IdOne))))
           )
         )
       },
-      testM("delete should delete") {
-        val result = for {
+      testM("delete should delete Model from repository") {
+        for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
-          result <- Get("/models/1") ~> api.routes
-        } yield result
-
-        assertM(result)(
-          handled(
-            status(equalTo(StatusCodes.OK))
+          assertRoute <- assertM(Delete("/models/1") ~> api.routes)(
+            handled(
+              status(equalTo(StatusCodes.OK))
+            )
           )
-        )
+          assertModel <- assertM(refMap.get)(equalTo(Map.empty[Id, Model]))
+        } yield assertRoute && assertModel
       },
       testM("get should return OK using assert") {
         for {
@@ -91,11 +90,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         )
       },
       testM("put using mocked repo") {
-        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo(IdOne)) returns value(Some(Model(IdOne)))) andThen
-          (RepositoryMock.Put(equalTo(Model(IdOne))) returns unit)
+        val mockRepo: ULayer[Repository] = (MockRepository
+          .Get(equalTo(IdOne)) returns value(Some(Model(IdOne)))) andThen
+          (MockRepository.Put(equalTo(Model(IdOne))) returns unit)
         for {
           _ <- ZIO.unit //TODO
-          api = new Api(Runtime.unsafeFromLayer(x))
+          api = new Api(Runtime.unsafeFromLayer(mockRepo))
           result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
@@ -107,11 +107,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         def any[T]: Assertion[T] =
           Assertion.assertion("any")()(_ => true)
 
-        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo(IdOne)) returns value(Some(Model(IdOne)))) andThen
-          (RepositoryMock.Put(any[Model]) returns unit)
+        val mockRepo: ULayer[Repository] = (MockRepository
+          .Get(equalTo(IdOne)) returns value(Some(Model(IdOne)))) andThen
+          (MockRepository.Put(any[Model]) returns unit)
         for {
           _ <- ZIO.unit
-          api = new Api(Runtime.unsafeFromLayer(x))
+          api = new Api(Runtime.unsafeFromLayer(mockRepo))
           result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
