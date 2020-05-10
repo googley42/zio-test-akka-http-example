@@ -50,7 +50,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           refMap <- Ref.make[Map[Id, Model]](Map.empty)
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
-          result <- Put("/put", Model(IdOne)) ~> api.routes
+          result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
@@ -63,7 +63,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         for {
           _ <- ZIO.unit //TODO
           api = new Api(Runtime.unsafeFromLayer(x))
-          result <- Put("/put", Model(IdOne)) ~> api.routes
+          result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
@@ -79,7 +79,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         for {
           _ <- ZIO.unit
           api = new Api(Runtime.unsafeFromLayer(x))
-          result <- Put("/put", Model(IdOne)) ~> api.routes
+          result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))

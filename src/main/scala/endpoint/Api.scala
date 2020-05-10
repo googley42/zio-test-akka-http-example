@@ -17,13 +17,13 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   lazy val routes: Route = putModel ~ getModel ~ deleteModel ~ getAll
 
-  private lazy val putModel: Route = put {
-    path("put") {
+  private val putModel = pathPrefix("models") {
+    put {
       entity(as[Model]) { model =>
         val putM: ZIO[Repository, Throwable, Unit] =
           for {
             maybeExistsAlready <- ZIO.accessM[Repository](_.get.get(model.id))
-//            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready")) // TODO - some logging
+            //            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready")) // TODO - some logging
             _ <- ZIO.accessM[Repository](_.get.put(model))
           } yield ()
 
@@ -33,6 +33,23 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
       }
     }
   }
+
+//  private lazy val putModel: Route = put {
+//    path("put") {
+//      entity(as[Model]) { model =>
+//        val putM: ZIO[Repository, Throwable, Unit] =
+//          for {
+//            maybeExistsAlready <- ZIO.accessM[Repository](_.get.get(model.id))
+////            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready")) // TODO - some logging
+//            _ <- ZIO.accessM[Repository](_.get.put(model))
+//          } yield ()
+//
+//        putM
+//          .orElseFail(StatusCodes.InternalServerError)
+//          .fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $model"))
+//      }
+//    }
+//  }
 
   private lazy val getModel: Route = pathPrefix("get") {
     get {
