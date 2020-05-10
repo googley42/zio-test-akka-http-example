@@ -15,9 +15,9 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   private implicit val printer: Printer = Printer.noSpaces.copy(dropNullValues = true)
 
-  lazy val routes: Route = putModel ~ getModel ~ deleteModel ~ getAll
+  lazy val routes: Route = putAndGetModel ~ deleteModel
 
-  private val putModel = pathPrefix("models") {
+  private val putAndGetModel = pathPrefix("models") {
     put {
       entity(as[Model]) { model =>
         val putM: ZIO[Repository, Throwable, Unit] =
@@ -31,6 +31,19 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
           .orElseFail(StatusCodes.InternalServerError)
           .fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $model"))
       }
+    } ~ get {
+      pathPrefix(Segment) { implicit id =>
+        pathEnd {
+          getModel(Id(id))
+            .fold(failureStatus => complete(failureStatus), model => complete(model))
+        }
+      }
+    } ~ get {
+      val recordsM: ZIO[Repository, Throwable, Seq[Model]] = for {
+        records <- ZIO.accessM[Repository](_.get.getAll)
+      } yield records
+
+      recordsM.fold(failureStatus => complete(failureStatus), records => complete(records))
     }
   }
 
@@ -51,16 +64,16 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 //    }
 //  }
 
-  private lazy val getModel: Route = pathPrefix("get") {
-    get {
-      pathPrefix(Segment) { id =>
-        pathEnd {
-          getModel(Id(id))
-            .fold(failureStatus => complete(failureStatus), model => complete(model))
-        }
-      }
-    }
-  }
+//  private lazy val getModel: Route = pathPrefix("get") {
+//    get {
+//      pathPrefix(Segment) { id =>
+//        pathEnd {
+//          getModel(Id(id))
+//            .fold(failureStatus => complete(failureStatus), model => complete(model))
+//        }
+//      }
+//    }
+//  }
 
   private def getModel(id: Id): ZIO[Repository, StatusCode, Model] =
     for {
@@ -81,14 +94,14 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
     }
   }
 
-  private lazy val getAll: Route = get {
-    val recordsM: ZIO[Repository, Throwable, Seq[Model]] = for {
-      records <- ZIO.accessM[Repository](_.get.getAll)
-    } yield records
-
-    path("getAll") {
-      recordsM.fold(failureStatus => complete(failureStatus), records => complete(records))
-    }
-  }
+//  private lazy val getAll: Route = get {
+//    val recordsM: ZIO[Repository, Throwable, Seq[Model]] = for {
+//      records <- ZIO.accessM[Repository](_.get.getAll)
+//    } yield records
+//
+//    path("getAll") {
+//      recordsM.fold(failureStatus => complete(failureStatus), records => complete(records))
+//    }
+//  }
 
 }
