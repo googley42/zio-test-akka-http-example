@@ -9,7 +9,7 @@ import io.circe.Printer
 import zio.{Runtime, ZIO}
 import zio.console._
 
-class Api(r: Runtime[Repository]) extends ZioSupport(r) {
+class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
   import FailFastCirceSupport._
   import io.circe.generic.auto._
 
