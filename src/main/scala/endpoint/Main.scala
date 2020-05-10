@@ -23,7 +23,7 @@ object Main extends App {
       implicit val ec: ExecutionContext = platform.executor.asEC
       for {
         refMap <- Ref.make[Map[Id, Model]](Map.empty)
-        api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
+        api = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ layer(refMap)))
         server <- ZIO.fromFuture(_ => Http().bindAndHandle(api.routes, "localhost", 8000))
       } yield server
     }

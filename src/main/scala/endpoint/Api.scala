@@ -1,5 +1,7 @@
 package endpoint
 
+import java.util.UUID
+
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -8,6 +10,7 @@ import endpoint.model.{Id, Model}
 import io.circe.Printer
 import zio.{Runtime, ZIO}
 import zio.console._
+import zio.logging.{log, LogAnnotation}
 
 class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
   import FailFastCirceSupport._
@@ -34,8 +37,10 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
     } ~ pathPrefix(Segment) { implicit id =>
       get {
         pathEnd {
-          getModel(Id(id))
-            .fold(failureStatus => complete(failureStatus), model => complete(model))
+          log.locally(LogAnnotation.CorrelationId(Some(UUID.fromString("6c7dcaa9-e383-4993-be20-b8dd1949e19f")))) {
+            getModel(Id(id))
+              .fold(failureStatus => complete(failureStatus), model => complete(model))
+          }
         }
       } ~ delete {
         pathEnd {

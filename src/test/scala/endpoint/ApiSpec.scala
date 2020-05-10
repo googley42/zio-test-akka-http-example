@@ -18,14 +18,16 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
   private val IdOne = Id("1")
   private val IdTwo = Id("2")
 
+  def layer(refMap: Ref[Map[Id, Model]]) =
+    LoggingLive.layer ++ (LoggingLive.layer >>> InMemoryRepository.inMemory(refMap))
+
   override def spec =
     suite("ApiSpec")(
       testM("get all should return all records using assertM") {
 
         val result = for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
-          api = new Api(Runtime.unsafeFromLayer(layer))
+          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
           result <- Get("/models") ~> api.routes
         } yield result
 
@@ -40,8 +42,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 
         val result = for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
-          api = new Api(Runtime.unsafeFromLayer(layer))
+          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
           result <- Get("/models/1") ~> api.routes
         } yield result
 
@@ -55,8 +56,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("delete should delete Model from repository") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
-          api = new Api(Runtime.unsafeFromLayer(layer))
+          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
           assertRoute <- assertM(Delete("/models/1") ~> api.routes)(
             handled(
               status(equalTo(StatusCodes.OK))
@@ -68,8 +68,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("get should return OK using assert") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
-          api = new Api(Runtime.unsafeFromLayer(layer))
+          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
           result <- Get("/models/1") ~> api.routes
         } yield assert(result)(
           handled(
@@ -80,8 +79,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("put using in memory repo") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty)
-          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
-          api = new Api(Runtime.unsafeFromLayer(layer))
+          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
           result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
@@ -95,7 +93,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           (MockRepository.Put(equalTo(Model(IdOne))) returns unit)
         for {
           _ <- ZIO.unit //TODO
-          api = new Api(Runtime.unsafeFromLayer(mockRepo))
+          api = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ mockRepo))
           result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
@@ -108,17 +106,18 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 
         def getAnyModel(model: Model) = MockRepository.Get(any[Id]) returns value(Some(model))
         val putAnyModel = MockRepository.Put(any[Model]) returns unit
-        def mockRepo(model: Model) = getAnyModel(model) andThen putAnyModel
+        def mockRepo(model: Model): ULayer[Repository] =
+          getAnyModel(model) andThen putAnyModel // note we need type annotation : ULayer[Repository] else we get java.lang.Error: Defect in zio.Has: Could not find Repository::Service inside Map(Logger[-String] -> zio.logging.Logging$$anon$1@18fac746)
 
         for {
           _ <- ZIO.unit
-          api1 = new Api(Runtime.unsafeFromLayer(mockRepo(Model(IdOne))))
+          api1 = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ mockRepo(Model(IdOne))))
           assertRoute1 <- assertM(Put("/models", Model(IdOne)) ~> api1.routes)(
             handled(
               status(equalTo(StatusCodes.OK))
             )
           )
-          api2 = new Api(Runtime.unsafeFromLayer(mockRepo(Model(IdTwo))))
+          api2 = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ mockRepo(Model(IdTwo))))
           assertRoute2 <- assertM(Put("/models", Model(IdTwo)) ~> api2.routes)(
             handled(
               status(equalTo(StatusCodes.OK))
