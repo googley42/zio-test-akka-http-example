@@ -1,6 +1,6 @@
 package endpoint
 
-import endpoint.model.Model
+import endpoint.model.{Id, Model}
 import zio.ZIO
 
 object Repository {
@@ -8,7 +8,7 @@ object Repository {
   trait Service {
     def put(testMsg: Model): ZIO[Any, Throwable, Unit]
     def getAll: ZIO[Any, Throwable, Seq[Model]]
-    def delete(id: String): ZIO[Any, Throwable, Unit]
-    def get(id: String): ZIO[Any, Throwable, Option[Model]]
+    def delete(id: Id): ZIO[Any, Throwable, Unit]
+    def get(id: Id): ZIO[Any, Throwable, Option[Model]]
   }
 }

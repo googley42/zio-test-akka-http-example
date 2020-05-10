@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import endpoint.model.Model
+import endpoint.model.{Id, Model}
 import io.circe.Printer
 import zio.{Runtime, ZIO}
 import zio.console._
@@ -38,14 +38,14 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
     get {
       pathPrefix(Segment) { id =>
         pathEnd {
-          getModel(id)
+          getModel(Id(id))
             .fold(failureStatus => complete(failureStatus), model => complete(model))
         }
       }
     }
   }
 
-  private def getModel(id: String): ZIO[Repository, StatusCode, Model] =
+  private def getModel(id: Id): ZIO[Repository, StatusCode, Model] =
     for {
       repo <- ZIO.access[Repository](_.get)
       findResult <- repo
@@ -56,7 +56,7 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   private lazy val deleteModel: Route = delete {
     val deleteM: ZIO[Repository, Throwable, Unit] = for {
-      _ <- ZIO.accessM[Repository](_.get.delete("todo"))
+      _ <- ZIO.accessM[Repository](_.get.delete(Id("todo")))
     } yield ()
 
     path("deleteFailOnIds") {

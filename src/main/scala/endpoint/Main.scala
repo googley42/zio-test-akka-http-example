@@ -3,7 +3,7 @@ package endpoint
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import endpoint.model.Model
+import endpoint.model.{Id, Model}
 import zio._
 import zio.console.Console
 
@@ -20,7 +20,7 @@ object Main extends App {
       implicit val mat: ActorMaterializer = ActorMaterializer()
       implicit val ec: ExecutionContext = platform.executor.asEC
       for {
-        refMap <- Ref.make[Map[String, Model]](Map.empty)
+        refMap <- Ref.make[Map[Id, Model]](Map.empty)
         api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
         server <- ZIO.fromFuture(_ => Http().bindAndHandle(api.routes, "localhost", 8000))
       } yield server
@@ -33,7 +33,7 @@ object Main extends App {
       exitCode <- httpServer.useForever.as(0)
     } yield exitCode).orDie
 
-  private def layer(refMap: Ref[Map[String, Model]]) =
+  private def layer(refMap: Ref[Map[Id, Model]]) =
     Console.live >>> InMemoryRepository.inMemory(refMap)
 
 }

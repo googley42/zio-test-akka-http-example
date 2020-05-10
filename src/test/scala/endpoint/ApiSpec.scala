@@ -2,7 +2,7 @@ package endpoint
 
 import akka.http.scaladsl.model.StatusCodes
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
-import endpoint.model.Model
+import endpoint.model.{Id, Model}
 import zio.console.Console
 import zio.test.Assertion._
 import zio.test.akkahttp.DefaultAkkaRunnableSpec
@@ -14,12 +14,14 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
   import FailFastCirceSupport._
   import io.circe.generic.auto._
 
+  private val IdOne = Id("1")
+
   override def spec =
     suite("ApiSpec")(
       testM("get should return OK using assertM") {
 
         val result = for {
-          refMap <- Ref.make[Map[String, Model]](Map.empty + ("1" -> Model("1")))
+          refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/get/1") ~> api.routes
@@ -33,7 +35,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       },
       testM("get should return OK using assert") {
         for {
-          refMap <- Ref.make[Map[String, Model]](Map.empty + ("1" -> Model("1")))
+          refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/get/1") ~> api.routes
@@ -45,10 +47,10 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       },
       testM("put using in memory repo") {
         for {
-          refMap <- Ref.make[Map[String, Model]](Map.empty)
+          refMap <- Ref.make[Map[Id, Model]](Map.empty)
           layer = Console.live >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
-          result <- Put("/put", Model("1")) ~> api.routes
+          result <- Put("/put", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
@@ -56,12 +58,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         )
       },
       testM("put using mocked repo") {
-        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo("1")) returns value(Some(Model("1")))) andThen
-          (RepositoryMock.Put(equalTo(Model("1"))) returns unit)
+        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo(IdOne)) returns value(Some(Model(IdOne)))) andThen
+          (RepositoryMock.Put(equalTo(Model(IdOne))) returns unit)
         for {
           _ <- ZIO.unit //TODO
           api = new Api(Runtime.unsafeFromLayer(x))
-          result <- Put("/put", Model("1")) ~> api.routes
+          result <- Put("/put", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
@@ -72,12 +74,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         def any[T]: Assertion[T] =
           Assertion.assertion("any")()(_ => true)
 
-        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo("1")) returns value(Some(Model("1")))) andThen
+        val x: ULayer[Repository] = (RepositoryMock.Get(equalTo(IdOne)) returns value(Some(Model(IdOne)))) andThen
           (RepositoryMock.Put(any[Model]) returns unit)
         for {
           _ <- ZIO.unit
           api = new Api(Runtime.unsafeFromLayer(x))
-          result <- Put("/put", Model("1")) ~> api.routes
+          result <- Put("/put", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
             status(equalTo(StatusCodes.OK))
