@@ -31,8 +31,8 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
           .orElseFail(StatusCodes.InternalServerError)
           .fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $model"))
       }
-    } ~ get {
-      pathPrefix(Segment) { implicit id =>
+    } ~ pathPrefix(Segment) { implicit id =>
+      get {
         pathEnd {
           getModel(Id(id))
             .fold(failureStatus => complete(failureStatus), model => complete(model))
