@@ -24,7 +24,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 
         val result = for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = Console.live >>> InMemoryRepository.inMemory(refMap)
+          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/models") ~> api.routes
         } yield result
@@ -40,7 +40,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 
         val result = for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = Console.live >>> InMemoryRepository.inMemory(refMap)
+          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/models/1") ~> api.routes
         } yield result
@@ -55,7 +55,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("delete should delete Model from repository") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = Console.live >>> InMemoryRepository.inMemory(refMap)
+          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           assertRoute <- assertM(Delete("/models/1") ~> api.routes)(
             handled(
@@ -68,7 +68,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("get should return OK using assert") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          layer = Console.live >>> InMemoryRepository.inMemory(refMap)
+          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Get("/models/1") ~> api.routes
         } yield assert(result)(
@@ -80,7 +80,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("put using in memory repo") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty)
-          layer = Console.live >>> InMemoryRepository.inMemory(refMap)
+          layer = LoggingLive.layer >>> InMemoryRepository.inMemory(refMap)
           api = new Api(Runtime.unsafeFromLayer(layer))
           result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
@@ -104,8 +104,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         )
       },
       testM("put using mocked repo, playing with custom any assertion") {
-        def any[T]: Assertion[T] =
-          Assertion.assertion("any")()(_ => true)
+        def any[T]: Assertion[T] = Assertion.assertion("any")()(_ => true)
 
         def getAnyModel(model: Model) = MockRepository.Get(any[Id]) returns value(Some(model))
         val putAnyModel = MockRepository.Put(any[Model]) returns unit

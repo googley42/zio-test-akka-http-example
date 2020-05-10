@@ -6,6 +6,8 @@ import akka.stream.ActorMaterializer
 import endpoint.model.{Id, Model}
 import zio._
 import zio.console.Console
+import zio.logging.LogAnnotation
+import zio.logging.slf4j.Slf4jLogger
 
 import scala.concurrent.ExecutionContext
 
@@ -34,6 +36,6 @@ object Main extends App {
     } yield exitCode).orDie
 
   private def layer(refMap: Ref[Map[Id, Model]]) =
-    Console.live >>> InMemoryRepository.inMemory(refMap)
+    (LoggingLive.layer ++ Console.live) >>> InMemoryRepository.inMemory(refMap)
 
 }
