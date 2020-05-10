@@ -15,9 +15,9 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
   private implicit val printer: Printer = Printer.noSpaces.copy(dropNullValues = true)
 
-  lazy val routes: Route = putAndGetModel ~ deleteModel
+  lazy val routes: Route = putAndGetAndDeleteModel
 
-  private val putAndGetModel = pathPrefix("models") {
+  private val putAndGetAndDeleteModel = pathPrefix("models") {
     put {
       entity(as[Model]) { model =>
         val putM: ZIO[Repository, Throwable, Unit] =
@@ -36,6 +36,10 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
         pathEnd {
           getModel(Id(id))
             .fold(failureStatus => complete(failureStatus), model => complete(model))
+        }
+      } ~ delete {
+        pathEnd {
+          deleteModel(Id(id))
         }
       }
     } ~ get {
@@ -84,14 +88,12 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
         .someOrFail(StatusCodes.NotFound)
     } yield findResult
 
-  private lazy val deleteModel: Route = delete {
+  private def deleteModel(id: Id): Route = delete {
     val deleteM: ZIO[Repository, Throwable, Unit] = for {
-      _ <- ZIO.accessM[Repository](_.get.delete(Id("todo")))
+      _ <- ZIO.accessM[Repository](_.get.delete(id))
     } yield ()
 
-    path("deleteFailOnIds") {
-      deleteM.fold(failureStatus => complete(failureStatus), _ => complete(()))
-    }
+    deleteM.fold(failureStatus => complete(failureStatus), _ => complete(()))
   }
 
 //  private lazy val getAll: Route = get {

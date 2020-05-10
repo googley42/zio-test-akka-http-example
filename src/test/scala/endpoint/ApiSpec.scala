@@ -52,6 +52,20 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         )
       },
+      testM("delete should delete") {
+        val result = for {
+          refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
+          layer = Console.live >>> InMemoryRepository.inMemory(refMap)
+          api = new Api(Runtime.unsafeFromLayer(layer))
+          result <- Get("/models/1") ~> api.routes
+        } yield result
+
+        assertM(result)(
+          handled(
+            status(equalTo(StatusCodes.OK))
+          )
+        )
+      },
       testM("get should return OK using assert") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
