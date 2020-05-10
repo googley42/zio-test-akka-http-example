@@ -103,22 +103,29 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         )
       },
-      testM("put using mocked repo, playing with assertions") {
+      testM("put using mocked repo, playing with custom any assertion") {
         def any[T]: Assertion[T] =
           Assertion.assertion("any")()(_ => true)
 
-        val mockRepo: ULayer[Repository] = (MockRepository
-          .Get(equalTo(IdOne)) returns value(Some(Model(IdOne)))) andThen
-          (MockRepository.Put(any[Model]) returns unit)
+        def getAnyModel(model: Model) = MockRepository.Get(any[Id]) returns value(Some(model))
+        val putAnyModel = MockRepository.Put(any[Model]) returns unit
+        def mockRepo(model: Model) = getAnyModel(model) andThen putAnyModel
+
         for {
           _ <- ZIO.unit
-          api = new Api(Runtime.unsafeFromLayer(mockRepo))
-          result <- Put("/models", Model(IdOne)) ~> api.routes
-        } yield assert(result)(
-          handled(
-            status(equalTo(StatusCodes.OK))
+          api1 = new Api(Runtime.unsafeFromLayer(mockRepo(Model(IdOne))))
+          assertRoute1 <- assertM(Put("/models", Model(IdOne)) ~> api1.routes)(
+            handled(
+              status(equalTo(StatusCodes.OK))
+            )
           )
-        )
+          api2 = new Api(Runtime.unsafeFromLayer(mockRepo(Model(IdTwo))))
+          assertRoute2 <- assertM(Put("/models", Model(IdTwo)) ~> api2.routes)(
+            handled(
+              status(equalTo(StatusCodes.OK))
+            )
+          )
+        } yield assertRoute1 && assertRoute2
       }
     )
 }
