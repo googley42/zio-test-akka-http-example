@@ -51,34 +51,6 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
     }
   }
 
-//  private lazy val putModel: Route = put {
-//    path("put") {
-//      entity(as[Model]) { model =>
-//        val putM: ZIO[Repository, Throwable, Unit] =
-//          for {
-//            maybeExistsAlready <- ZIO.accessM[Repository](_.get.get(model.id))
-////            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready")) // TODO - some logging
-//            _ <- ZIO.accessM[Repository](_.get.put(model))
-//          } yield ()
-//
-//        putM
-//          .orElseFail(StatusCodes.InternalServerError)
-//          .fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $model"))
-//      }
-//    }
-//  }
-
-//  private lazy val getModel: Route = pathPrefix("get") {
-//    get {
-//      pathPrefix(Segment) { id =>
-//        pathEnd {
-//          getModel(Id(id))
-//            .fold(failureStatus => complete(failureStatus), model => complete(model))
-//        }
-//      }
-//    }
-//  }
-
   private def getModel(id: Id): ZIO[Repository, StatusCode, Model] =
     for {
       repo <- ZIO.access[Repository](_.get)
@@ -95,15 +67,5 @@ class Api(r: Runtime[Repository]) extends ZioSupport(r) {
 
     deleteM.fold(failureStatus => complete(failureStatus), _ => complete(()))
   }
-
-//  private lazy val getAll: Route = get {
-//    val recordsM: ZIO[Repository, Throwable, Seq[Model]] = for {
-//      records <- ZIO.accessM[Repository](_.get.getAll)
-//    } yield records
-//
-//    path("getAll") {
-//      recordsM.fold(failureStatus => complete(failureStatus), records => complete(records))
-//    }
-//  }
 
 }

@@ -21,7 +21,8 @@ object InMemoryRepository {
         override def delete(id: Id): ZIO[Any, Throwable, Unit] =
           logger.info(s"deleting record $id") *> refMap.update(_ - id)
 
-        override def get(id: Id): ZIO[Any, Throwable, Option[Model]] = refMap.get.map(_.get(id))
+        override def get(id: Id): ZIO[Any, Throwable, Option[Model]] =
+          logger.info(s"getting record $id") *> refMap.get.map(_.get(id))
       }
     }
 
