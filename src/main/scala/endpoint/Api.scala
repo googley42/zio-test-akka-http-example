@@ -44,7 +44,9 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
         }
       } ~ delete {
         pathEnd {
-          deleteModel(Id(id))
+          log.locally(LogAnnotation.CorrelationId(Some(UUID.fromString("6c7dcaa9-e383-4993-be20-b8dd1949e19f")))) {
+            deleteModel(Id(id)).fold(failureStatus => complete(failureStatus), _ => complete(()))
+          }
         }
       }
     } ~ get {
@@ -65,12 +67,9 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
         .someOrFail(StatusCodes.NotFound)
     } yield findResult
 
-  private def deleteModel(id: Id): Route = delete {
-    val deleteM: ZIO[Repository, Throwable, Unit] = for {
+  private def deleteModel(id: Id): ZIO[Repository, Throwable, Unit] =
+    for {
       _ <- ZIO.accessM[Repository](_.get.delete(id))
     } yield ()
-
-    deleteM.fold(failureStatus => complete(failureStatus), _ => complete(()))
-  }
 
 }

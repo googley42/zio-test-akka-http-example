@@ -1,9 +1,8 @@
 package endpoint
 
 import endpoint.model.{Id, Model}
-import zio.{Has, Ref, ZIO, ZLayer}
-import zio.console.Console
 import zio.logging.{Logger, Logging}
+import zio.{Ref, ZIO, ZLayer}
 
 object InMemoryRepository {
 
