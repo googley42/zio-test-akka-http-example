@@ -26,7 +26,8 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
         val putM: ZIO[Repository, Throwable, Unit] =
           for {
             maybeExistsAlready <- ZIO.accessM[Repository](_.get.get(model.id))
-            //            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready")) // TODO - some logging
+            //            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready"))
+            // TODO - contextual logging for model.id
             _ <- ZIO.accessM[Repository](_.get.put(model))
           } yield ()
 

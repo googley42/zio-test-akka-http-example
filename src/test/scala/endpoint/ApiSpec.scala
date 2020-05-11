@@ -18,8 +18,11 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
   private val IdOne = Id("1")
   private val IdTwo = Id("2")
 
-  def layer(refMap: Ref[Map[Id, Model]]) =
-    LoggingLive.layer ++ (LoggingLive.layer >>> InMemoryRepository.inMemory(refMap))
+  // TODO inject mock console
+  private val log = (Console.live ++ zio.clock.Clock.live) >>> LoggingLive.testLayer
+
+  private def layer(refMap: Ref[Map[Id, Model]]) =
+    log ++ (log >>> InMemoryRepository.inMemory(refMap))
 
   override def spec =
     suite("ApiSpec")(
@@ -101,7 +104,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         )
       },
-      testM("put using mocked repo, playing with custom any assertion") {
+      testM("put using mocked repo, playing with custom any[T] assertion") {
         def any[T]: Assertion[T] = Assertion.assertion("any")()(_ => true)
 
         def getAnyModel(model: Model) = MockRepository.Get(any[Id]) returns value(Some(model))
