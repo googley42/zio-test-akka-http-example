@@ -18,11 +18,15 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
   private val IdOne = Id("1")
   private val IdTwo = Id("2")
 
-  // TODO inject mock console
-  private val log: ZLayer[Any, Nothing, Logging] = (Console.live ++ zio.clock.Clock.live) >>> LoggingLive.testLayer
+//  // TODO inject mock console
+//  private val log: ZLayer[Any, Nothing, Logging] = (Console.live ++ zio.clock.Clock.live) >>> LoggingLive.testLayer
+
+  import zio.test.environment._
+  private val loggingLayerTmp: ZLayer[zio.ZEnv, Nothing, Logging] = ((Live.default >>> TestConsole.debug) ++ (Live.default >>> TestClock.default)) >>> LoggingLive.testLayer
+  val loggingLayer: ZLayer[Any, Nothing, Logging] = zio.ZEnv.live >>> loggingLayerTmp
 
   private def layer(refMap: Ref[Map[Id, Model]]): ZLayer[Any, Nothing, Logging with Repository] =
-    log ++ (log >>> InMemoryRepository.inMemory(refMap))
+    loggingLayer ++ (loggingLayer >>> InMemoryRepository.inMemory(refMap))
 
   override def spec =
     suite("ApiSpec")(
@@ -43,18 +47,23 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       },
       testM("get should return OK using assertM") {
 
-        val result = for {
+        for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
           api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
-          result <- Get("/models/1") ~> api.routes
-        } yield result
-
-        assertM(result)(
-          handled(
-            status(equalTo(StatusCodes.OK))
-              && entityAs[Model](isRight(equalTo(Model(IdOne))))
+          assertRoute <- assertM(Get("/models/1") ~> api.routes)(
+            handled(
+              status(equalTo(StatusCodes.OK))
+                && entityAs[Model](isRight(equalTo(Model(IdOne))))
+            )
           )
-        )
+          vector <- TestConsole.output
+        } yield assertRoute /* &&
+          assert(vector.head)(
+            startsWithString(
+              "1970-01-01T00:00Z INFO  [correlation-id = 6c7dcaa9-e383-4993-be20-b8dd1949e19f] deleting record Id(1)"
+            )
+          ) */
+
       },
       testM("delete should delete Model from repository") {
         for {
