@@ -1,15 +1,15 @@
 package endpoint
 
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
+import akka.http.scaladsl.model.StatusCodes
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoint.model.{Id, Model}
 import zio.console.Console
+import zio.logging.Logging
 import zio.test.Assertion._
+import zio.test._
 import zio.test.akkahttp.DefaultAkkaRunnableSpec
 import zio.test.mock.Expectation._
-import zio.test._
-import zio.{Ref, Runtime, ULayer, ZIO}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
+import zio.{Ref, Runtime, ULayer, ZIO, ZLayer}
 
 object ApiSpec extends DefaultAkkaRunnableSpec {
   import FailFastCirceSupport._
@@ -19,9 +19,9 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
   private val IdTwo = Id("2")
 
   // TODO inject mock console
-  private val log = (Console.live ++ zio.clock.Clock.live) >>> LoggingLive.testLayer
+  private val log: ZLayer[Any, Nothing, Logging] = (Console.live ++ zio.clock.Clock.live) >>> LoggingLive.testLayer
 
-  private def layer(refMap: Ref[Map[Id, Model]]) =
+  private def layer(refMap: Ref[Map[Id, Model]]): ZLayer[Any, Nothing, Logging with Repository] =
     log ++ (log >>> InMemoryRepository.inMemory(refMap))
 
   override def spec =
