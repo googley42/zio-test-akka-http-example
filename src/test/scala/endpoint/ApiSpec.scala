@@ -3,11 +3,12 @@ package endpoint
 import akka.http.scaladsl.model.StatusCodes
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoint.model.{Id, Model}
+import zio.clock.Clock
 import zio.console.Console
-import zio.logging.Logging
 import zio.test.Assertion._
 import zio.test._
 import zio.test.akkahttp.DefaultAkkaRunnableSpec
+import zio.test.environment._
 import zio.test.mock.Expectation._
 import zio.{Ref, Runtime, ULayer, ZIO, ZLayer}
 
@@ -18,15 +19,19 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
   private val IdOne = Id("1")
   private val IdTwo = Id("2")
 
-//  // TODO inject mock console
-//  private val log: ZLayer[Any, Nothing, Logging] = (Console.live ++ zio.clock.Clock.live) >>> LoggingLive.testLayer
+  private val logLayer = for {
+    clock <- ZIO.environment[Clock]
+    clockLayer = ZLayer.succeed[Clock.Service](clock.get)
+    console <- ZIO.environment[Console]
+    consoleLayer = ZLayer.succeed[Console.Service](console.get)
+    logLayer = consoleLayer ++ clockLayer >>> LoggingLive.testLayer
+  } yield logLayer
 
-  import zio.test.environment._
-  private val loggingLayerTmp: ZLayer[zio.ZEnv, Nothing, Logging] = ((Live.default >>> TestConsole.debug) ++ (Live.default >>> TestClock.default)) >>> LoggingLive.testLayer
-  val loggingLayer: ZLayer[Any, Nothing, Logging] = zio.ZEnv.live >>> loggingLayerTmp
-
-  private def layer(refMap: Ref[Map[Id, Model]]): ZLayer[Any, Nothing, Logging with Repository] =
-    loggingLayer ++ (loggingLayer >>> InMemoryRepository.inMemory(refMap))
+  private def apiLayer(refMap: Ref[Map[Id, Model]]) =
+    for {
+      logLayer <- logLayer
+      apiLayer = logLayer ++ (logLayer >>> InMemoryRepository.inMemory(refMap))
+    } yield apiLayer
 
   override def spec =
     suite("ApiSpec")(
@@ -34,7 +39,8 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 
         val result = for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
+          apiLayer <- apiLayer(refMap)
+          api = new Api(Runtime.unsafeFromLayer(apiLayer))
           result <- Get("/models") ~> api.routes
         } yield result
 
@@ -45,11 +51,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         )
       },
-      testM("get should return OK using assertM") {
+      testM("get should return OK and Model with IdOne and log with corelation id") {
 
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
+          apiLayer <- apiLayer(refMap)
+          api = new Api(Runtime.unsafeFromLayer(apiLayer))
           assertRoute <- assertM(Get("/models/1") ~> api.routes)(
             handled(
               status(equalTo(StatusCodes.OK))
@@ -57,18 +64,19 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
             )
           )
           vector <- TestConsole.output
-        } yield assertRoute /* &&
+        } yield assertRoute &&
           assert(vector.head)(
             startsWithString(
-              "1970-01-01T00:00Z INFO  [correlation-id = 6c7dcaa9-e383-4993-be20-b8dd1949e19f] deleting record Id(1)"
+              "1970-01-01T00:00Z INFO  [correlation-id = 6c7dcaa9-e383-4993-be20-b8dd1949e19f] getting record Id(1)"
             )
-          ) */
+          )
 
       },
       testM("delete should delete Model from repository") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
+          apiLayer <- apiLayer(refMap)
+          api = new Api(Runtime.unsafeFromLayer(apiLayer))
           assertRoute <- assertM(Delete("/models/1") ~> api.routes)(
             handled(
               status(equalTo(StatusCodes.OK))
@@ -80,7 +88,8 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("get should return OK using assert") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
-          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
+          apiLayer <- apiLayer(refMap)
+          api = new Api(Runtime.unsafeFromLayer(apiLayer))
           result <- Get("/models/1") ~> api.routes
         } yield assert(result)(
           handled(
@@ -91,7 +100,8 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
       testM("put using in memory repo") {
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty)
-          api = new Api(Runtime.unsafeFromLayer(layer(refMap)))
+          apiLayer <- apiLayer(refMap)
+          api = new Api(Runtime.unsafeFromLayer(apiLayer))
           result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
@@ -105,7 +115,8 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           (MockRepository.Put(equalTo(Model(IdOne))) returns unit)
         for {
           _ <- ZIO.unit //TODO
-          api = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ mockRepo))
+          log <- logLayer
+          api = new Api(Runtime.unsafeFromLayer(log ++ mockRepo))
           result <- Put("/models", Model(IdOne)) ~> api.routes
         } yield assert(result)(
           handled(
@@ -122,13 +133,15 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
 
         for {
           _ <- ZIO.unit
-          api1 = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ mockRepo(Model(IdOne))))
+          log <- logLayer
+          api1 = new Api(Runtime.unsafeFromLayer(log ++ mockRepo(Model(IdOne))))
           assertRoute1 <- assertM(Put("/models", Model(IdOne)) ~> api1.routes)(
             handled(
               status(equalTo(StatusCodes.OK)) ?? "Model(IdOne)"
             )
           )
-          api2 = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ mockRepo(Model(IdTwo))))
+          log2 <- logLayer
+          api2 = new Api(Runtime.unsafeFromLayer(log2 ++ mockRepo(Model(IdTwo))))
           assertRoute2 <- assertM(Put("/models", Model(IdTwo)) ~> api2.routes)(
             handled(
               status(equalTo(StatusCodes.OK)) ?? "Model(IdTwo)"
