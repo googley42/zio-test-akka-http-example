@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio-streams" % ZioVersion,
   "dev.zio" %% "zio-test" % ZioVersion % "test",
   "dev.zio" %% "zio-test-sbt" % ZioVersion % "test",
+  "net.logstash.logback" % "logstash-logback-encoder" % "6.3",
   "dev.zio" %% "zio-logging-slf4j" % "0.2.8",
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.akka" %% "akka-http" % "10.1.9",
