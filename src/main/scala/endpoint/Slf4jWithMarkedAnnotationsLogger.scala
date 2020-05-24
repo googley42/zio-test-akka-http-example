@@ -9,14 +9,14 @@ import zio.internal.tracing.TracingConfig
 import zio.logging.{LogAnnotation, LogContext, LogLevel, Logging}
 import zio.{ULayer, ZIO}
 
-object LogAnnotations {
-
-  val InvoiceId: LogAnnotation[Option[String]] =
-    LogAnnotation[Option[String]]("invoice-id", None, (_, a) => a, _.getOrElse("invoice-id-not-set"))
-
-  val all = Seq(InvoiceId)
-
-}
+//object LogAnnotations {
+//
+//  val InvoiceId: LogAnnotation[Option[String]] =
+//    LogAnnotation[Option[String]]("invoice-id", None, (_, a) => a, _.getOrElse("invoice-id-not-set"))
+//
+//  val all: Seq[LogAnnotation[Option[String]]] = Seq(InvoiceId)
+//
+//}
 
 object Slf4jWithMarkedAnnotationsLogger {
 
