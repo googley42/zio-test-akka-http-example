@@ -7,20 +7,27 @@ import zio.logging.{LogAnnotation, Logging}
 import zio.logging.slf4j.Slf4jLogger
 
 object LoggingLive {
-  private val logFormat = "[correlation-id = %s] %s"
+  private val logFormat = "[custom_id = %s] %s"
+
+  val customLogAnnotation = LogAnnotation[Option[String]](
+    name = "custom_id",
+    initialValue = None,
+    combine = (_, r) => r,
+    render = _.getOrElse("undefined-custom_id")
+  )
 
   val layer: ZLayer[Any, Nothing, Logging] = Slf4jLogger.make { (context, message) =>
-    val correlationId = LogAnnotation.CorrelationId.render(
-      context.get(LogAnnotation.CorrelationId)
+    val customId = customLogAnnotation.render(
+      context.get(customLogAnnotation)
     )
-    logFormat.format(correlationId, message)
+    logFormat.format(customId, message)
   }
 
   val testLayer: ZLayer[Console with Clock, Nothing, Logging] = Logging.console { (context, message) =>
-    val correlationId = LogAnnotation.CorrelationId.render(
-      context.get(LogAnnotation.CorrelationId)
+    val customId = customLogAnnotation.render(
+      context.get(customLogAnnotation)
     )
-    logFormat.format(correlationId, message)
+    logFormat.format(customId, message)
   }
 
 }

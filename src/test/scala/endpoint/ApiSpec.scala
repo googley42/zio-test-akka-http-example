@@ -67,7 +67,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
         } yield assertRoute &&
           assert(vector.head)(
             startsWithString(
-              "1970-01-01T00:00Z INFO  [correlation-id = 6c7dcaa9-e383-4993-be20-b8dd1949e19f] getting record Id(1)"
+              "1970-01-01T00:00Z INFO  [custom_id = 1] getting record Id(1)"
             )
           )
 

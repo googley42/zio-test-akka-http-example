@@ -38,14 +38,14 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
     } ~ pathPrefix(Segment) { implicit id =>
       get {
         pathEnd {
-          log.locally(LogAnnotation.CorrelationId(Some(UUID.fromString("6c7dcaa9-e383-4993-be20-b8dd1949e19f")))) {
+          log.locally(LoggingLive.customLogAnnotation(Some(id))) {
             getModel(Id(id))
               .fold(failureStatus => complete(failureStatus), model => complete(model))
           }
         }
       } ~ delete {
         pathEnd {
-          log.locally(LogAnnotation.CorrelationId(Some(UUID.fromString("6c7dcaa9-e383-4993-be20-b8dd1949e19f")))) {
+          log.locally(LoggingLive.customLogAnnotation(Some(id))) {
             deleteModel(Id(id)).fold(failureStatus => complete(failureStatus), _ => complete(()))
           }
         }
