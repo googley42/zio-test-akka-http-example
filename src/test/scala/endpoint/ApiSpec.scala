@@ -24,7 +24,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
     clockLayer = ZLayer.succeed[Clock.Service](clock.get)
     console <- ZIO.environment[Console]
     consoleLayer = ZLayer.succeed[Console.Service](console.get)
-    logLayer = consoleLayer ++ clockLayer >>> LoggingLive.testLayer
+    logLayer = consoleLayer ++ clockLayer >>> AppLogging.testLayer
   } yield logLayer
 
   private def apiLayer(refMap: Ref[Map[Id, Model]]) =

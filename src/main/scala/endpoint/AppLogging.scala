@@ -6,7 +6,7 @@ import zio.console.Console
 import zio.logging.{LogAnnotation, Logging}
 import zio.logging.slf4j.Slf4jLogger
 
-object LoggingLive {
+object AppLogging {
   private val logFormat = "[custom_id = %s] %s"
 
   val customLogAnnotation = LogAnnotation[Option[String]](

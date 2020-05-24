@@ -23,7 +23,7 @@ object Main extends App {
       implicit val ec: ExecutionContext = platform.executor.asEC
       for {
         refMap <- Ref.make[Map[Id, Model]](Map.empty)
-        api = new Api(Runtime.unsafeFromLayer(LoggingLive.layer ++ layer(refMap)))
+        api = new Api(Runtime.unsafeFromLayer(AppLogging.layer ++ layer(refMap)))
         server <- ZIO.fromFuture(_ => Http().bindAndHandle(api.routes, "localhost", 8000))
       } yield server
     }
@@ -36,6 +36,6 @@ object Main extends App {
     } yield exitCode).orDie
 
   private def layer(refMap: Ref[Map[Id, Model]]) =
-    (LoggingLive.layer ++ Console.live) >>> InMemoryRepository.inMemory(refMap)
+    (AppLogging.layer ++ Console.live) >>> InMemoryRepository.inMemory(refMap)
 
 }
