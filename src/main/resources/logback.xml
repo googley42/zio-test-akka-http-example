@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+<!--    <if condition='isDefined("DEPLOYMENT_ENV")'>-->
+<!--        <then>-->
+<!--            <include resource="logback-include-appenders.xml"/>-->
+<!--        </then>-->
+<!--        <else>-->
+<!--            <include resource="logback-local-appenders.xml"/>-->
+<!--        </else>-->
+<!--    </if>-->
+    <include resource="logback-include-appenders.xml"/>
+
+    <!-- service log levels -->
+<!--    <logger name="com.disneystreaming.invoice" level="${APP_LOG_LEVEL:-INFO}"/>-->
+
+    <!-- ROOT level -->
+    <root level="${ROOT_LOG_LEVEL:-DEBUG}"/>
+</configuration>
