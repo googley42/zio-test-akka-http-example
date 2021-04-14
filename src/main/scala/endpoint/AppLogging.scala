@@ -3,7 +3,7 @@ package endpoint
 import zio.ZLayer
 import zio.clock.Clock
 import zio.console.Console
-import zio.logging.{LogAnnotation, Logging}
+import zio.logging.{LogAnnotation, LogFormat, LogLevel, Logging}
 import zio.logging.slf4j.Slf4jLogger
 
 object AppLogging {
@@ -25,11 +25,16 @@ object AppLogging {
     logFormat.format(customId, message)
   }
 
-  val testLayer: ZLayer[Console with Clock, Nothing, Logging] = Logging.console { (context, message) =>
-    val customId = customLogAnnotation.render(
-      context.get(customLogAnnotation)
-    )
-    logFormat.format(customId, message)
-  }
+  val testLayer = Logging.console(
+    logLevel = LogLevel.Info,
+    format = LogFormat.ColoredLogFormat()
+  ) >>> Logging.withRootLoggerName("my-component")
+
+//  val testLayer = Logging.console { (context, message) =>
+//    val customId = customLogAnnotation.render(
+//      context.get(customLogAnnotation)
+//    )
+//    logFormat.format(customId, message)
+//  }
 
 }
