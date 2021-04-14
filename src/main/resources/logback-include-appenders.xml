@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<included>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- logstash is used to create json but this is not necessarily sent via a log stash appender  -->
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+
+                <logstashMarkers/>
+                <arguments/>
+                <pattern class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
+                    <pattern>
+                        {
+                        "team":"mercury",
+                        "environment":"${DEPLOYMENT_ENV}",
+                        "region":"${AWS_REGION}",
+                        "host":"${HOSTNAME}",
+                        "logger":"%logger",
+                        "level":"%level",
+                        "thread":"%thread",
+                        "message":"%message"
+                        }
+                    </pattern>
+                </pattern>
+                <provider class="com.bamtechmedia.user.shared.logging.logstash.ErrorProvider"/>
+                <stackTrace>
+                    <fieldName>error-stacktrace</fieldName>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>50</maxDepthPerThrowable>
+                        <maxLength>4096</maxLength>
+                        <shortenedClassNameLength>25</shortenedClassNameLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                    </throwableConverter>
+                </stackTrace>
+                <stackHash>
+                    <fieldName>error-stackhash</fieldName>
+                </stackHash>
+            </providers>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="STDOUT"/>
+    </appender>
+
+    <root level="${APP_LOG_LEVEL:-INFO}">
+        <appender-ref ref="ASYNCSTDOUT"/>
+    </root>
+</included>

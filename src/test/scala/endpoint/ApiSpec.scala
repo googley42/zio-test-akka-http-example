@@ -5,6 +5,7 @@ import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoint.model.{Id, Model}
 import zio.clock.Clock
 import zio.console.Console
+import zio.logging.Logging
 import zio.test.Assertion._
 import zio.test._
 import zio.test.akkahttp.DefaultAkkaRunnableSpec
@@ -19,12 +20,12 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
   private val IdOne = Id("1")
   private val IdTwo = Id("2")
 
-  private val logLayer = for {
+  private val logLayer: ZIO[Console with Clock, Nothing, ZLayer[Any, Nothing, Logging]] = for {
     clock <- ZIO.environment[Clock]
     clockLayer = ZLayer.succeed[Clock.Service](clock.get)
     console <- ZIO.environment[Console]
     consoleLayer = ZLayer.succeed[Console.Service](console.get)
-    logLayer = consoleLayer ++ clockLayer >>> AppLogging.testLayer
+    logLayer = consoleLayer ++ clockLayer >>> LoggingLive.testLayer
   } yield logLayer
 
   private def apiLayer(refMap: Ref[Map[Id, Model]]) =

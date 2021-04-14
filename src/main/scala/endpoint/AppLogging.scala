@@ -16,6 +16,8 @@ object AppLogging {
     render = _.getOrElse("undefined-custom_id")
   )
 
+  val all: Seq[LogAnnotation[Option[String]]] = Seq(customLogAnnotation)
+
   val layer: ZLayer[Any, Nothing, Logging] = Slf4jLogger.make { (context, message) =>
     val customId = customLogAnnotation.render(
       context.get(customLogAnnotation)
