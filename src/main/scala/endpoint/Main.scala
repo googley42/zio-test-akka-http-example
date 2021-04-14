@@ -29,13 +29,12 @@ object Main extends App {
     }
   } yield server
 
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    (for {
-      _ <- console.putStrLn("Starting Akka HTTP server endpoint...")
-      exitCode <- httpServer.useForever.as(0)
-    } yield exitCode).orDie
-
   private def layer(refMap: Ref[Map[Id, Model]]) =
     (AppLogging.layer ++ Console.live) >>> InMemoryRepository.inMemory(refMap)
 
+  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
+    (for {
+      _ <- console.putStrLn("Starting Akka HTTP server endpoint...")
+      _ <- httpServer.useForever
+    } yield ()).orDie.exitCode
 }

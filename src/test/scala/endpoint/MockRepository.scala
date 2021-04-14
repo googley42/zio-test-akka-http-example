@@ -1,6 +1,6 @@
 package endpoint
 
-import zio.test.mock.Mockable
+import zio.test.mock.mockable
 
-@Mockable[Repository.Service]
+@mockable[Repository.Service]
 object MockRepository
