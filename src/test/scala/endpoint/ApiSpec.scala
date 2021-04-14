@@ -125,7 +125,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         } yield assertPutRoute
       },
-      testM("put using mocked repo, playing with custom any[T] assertion") {
+      testM("put using mocked repo, using anything assertion") {
 
         def getAnyModel(model: Model) = MockRepository.Get(anything, value(Some(model)))
         val putAnyModel = MockRepository.Put(anything, unit)
