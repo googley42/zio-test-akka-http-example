@@ -35,7 +35,7 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
           .orElseFail(StatusCodes.InternalServerError)
           .fold(failureStatus => complete(failureStatus), _ => complete(s"PUT $model"))
       }
-    } ~ pathPrefix(Segment) { implicit id =>
+    } ~ pathPrefix(Segment) { id =>
       get {
         pathEnd {
           log.locally(AppLogging.customLogAnnotation(Some(id))) {
