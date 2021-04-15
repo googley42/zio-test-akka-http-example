@@ -6,7 +6,6 @@ scalaVersion := "2.12.11"
 
 addCompilerPlugin(("org.scalamacros" % "paradise" % "2.1.1") cross CrossVersion.full)
 
-val CirceVersion = "0.12.1"
 val ZioVersion = "1.0.6"
 
 libraryDependencies ++= Seq(
@@ -20,11 +19,7 @@ libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.2.3",
   "com.typesafe.akka" %% "akka-http" % "10.1.9",
   "com.typesafe.akka" %% "akka-stream" % "2.5.23",
-  "de.heikoseeberger" %% "akka-http-circe" % "1.27.0",
-  "io.circe" %% "circe-core" % CirceVersion,
-  "io.circe" %% "circe-generic" % CirceVersion,
-  "io.circe" %% "circe-parser" % CirceVersion,
-  "io.circe" %% "circe-generic-extras" % CirceVersion,
+  "de.heikoseeberger" %% "akka-http-zio-json" % "1.36.0",
   "org.scalatest" %% "scalatest" % "3.0.1" % "test",
   "org.scalamock" %% "scalamock" % "4.1.0" % Test,
   "org.scalacheck" %% "scalacheck" % "1.14.3" % Test,

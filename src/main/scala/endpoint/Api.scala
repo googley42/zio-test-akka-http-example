@@ -1,22 +1,15 @@
 package endpoint
 
-import java.util.UUID
-
 import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoint.model.{Id, Model}
-import io.circe.Printer
+import zio.logging.log
 import zio.{Runtime, ZIO}
-import zio.console._
-import zio.logging.{log, LogAnnotation}
 
 class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
-  import FailFastCirceSupport._
-  import io.circe.generic.auto._
 
-  private implicit val printer: Printer = Printer.noSpaces.copy(dropNullValues = true)
+  import de.heikoseeberger.akkahttpziojson.ZioJsonSupport._
 
   lazy val routes: Route = putAndGetAndDeleteModel
 
@@ -46,7 +39,8 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
       } ~ delete {
         pathEnd {
           log.locally(AppLogging.customLogAnnotation(Some(id))) {
-            deleteModel(Id(id)).fold(failureStatus => complete(failureStatus), _ => complete(()))
+            deleteModel(Id(id))
+              .fold(failureStatus => complete(failureStatus), _ => complete(s"{}")) // TODO: get complete(())) compiling
           }
         }
       }
