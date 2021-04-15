@@ -1,7 +1,6 @@
 package endpoint
 
 import akka.http.scaladsl.model.StatusCodes
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import endpoint.model.{Id, Model}
 import zio.clock.Clock
 import zio.console.Console
@@ -14,8 +13,7 @@ import zio.test.mock.Expectation._
 import zio.{Ref, Runtime, ULayer, ZIO, ZLayer}
 
 object ApiSpec extends DefaultAkkaRunnableSpec {
-  import FailFastCirceSupport._
-  import io.circe.generic.auto._
+  import de.heikoseeberger.akkahttpziojson.ZioJsonSupport._
 
   private val IdOne = Id("1")
   private val IdTwo = Id("2")
