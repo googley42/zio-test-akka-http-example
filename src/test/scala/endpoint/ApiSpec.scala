@@ -50,7 +50,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         )
       },
-      testM("get should return OK and Model with IdOne and log with corelation id") {
+      testM("get should return OK and Model with IdOne and log with correlation id") {
 
         for {
           refMap <- Ref.make[Map[Id, Model]](Map.empty + (IdOne -> Model(IdOne)))
@@ -63,14 +63,9 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
             )
           )
           vector <- TestConsole.output
-        } yield assertRoute
-        /* TODO: get console logging working
-        && assert(vector.head)(
-            startsWithString(
-              "1970-01-01T00:00Z INFO  [custom_id = 1] getting record Id(1)"
-            )
-          )
-       */
+        } yield assertRoute && assert(vector.head)(
+          startsWithString("1970-01-01 00:00:00.000Z info my-component getting record Id(1)")
+        )
       },
       testM("delete should delete Model from repository") {
         for {
@@ -123,7 +118,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
           )
         } yield assertPutRoute
       },
-      testM("put using mocked repo, using anything assertion") {
+      testM("put using mocked repo") {
 
         def getAnyModel(model: Model) = MockRepository.Get(anything, value(Some(model)))
         val putAnyModel = MockRepository.Put(anything, unit)
@@ -139,8 +134,7 @@ object ApiSpec extends DefaultAkkaRunnableSpec {
               status(equalTo(StatusCodes.OK)) ?? "Model(IdOne)"
             )
           )
-          log2 <- logLayer
-          api2 = new Api(Runtime.unsafeFromLayer(log2 ++ mockRepo(Model(IdTwo))))
+          api2 = new Api(Runtime.unsafeFromLayer(log ++ mockRepo(Model(IdTwo))))
           assertPutRoute2 <- assertM(Put("/models", Model(IdTwo)) ~> api2.routes)(
             handled(
               status(equalTo(StatusCodes.OK)) ?? "Model(IdTwo)"

@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.{StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import endpoint.model.{Id, Model}
-import zio.logging.log
+import zio.logging.{log, Logging}
 import zio.{Runtime, ZIO}
 
 class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
@@ -16,13 +16,14 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
   private val putAndGetAndDeleteModel = pathPrefix("models") {
     put {
       entity(as[Model]) { model =>
-        val putM: ZIO[Repository, Throwable, Unit] =
-          for {
-            maybeExistsAlready <- ZIO.accessM[Repository](_.get.get(model.id))
-            //            _ <- ZIO.when(maybeExistsAlready.isDefined)(putStrLn(s"replacing model $maybeExistsAlready"))
-            // TODO - contextual logging for model.id
-            _ <- ZIO.accessM[Repository](_.get.put(model))
-          } yield ()
+        val putM: ZIO[Logging with Repository, Throwable, Unit] =
+          log.locally(AppLogging.customLogAnnotation(Some(model.id.value))) {
+            for {
+              maybeExistsAlready <- ZIO.accessM[Repository](_.get.get(model.id))
+              _ <- ZIO.when(maybeExistsAlready.isDefined)(log.info(s"replacing model $maybeExistsAlready"))
+              _ <- ZIO.accessM[Repository](_.get.put(model))
+            } yield ()
+          }
 
         putM
           .orElseFail(StatusCodes.InternalServerError)
@@ -40,7 +41,7 @@ class Api(r: Runtime[AppEnv]) extends ZioSupport(r) {
         pathEnd {
           log.locally(AppLogging.customLogAnnotation(Some(id))) {
             deleteModel(Id(id))
-              .fold(failureStatus => complete(failureStatus), _ => complete(s"{}")) // TODO: get complete(())) compiling
+              .fold(failureStatus => complete(failureStatus), _ => complete("{}"))
           }
         }
       }

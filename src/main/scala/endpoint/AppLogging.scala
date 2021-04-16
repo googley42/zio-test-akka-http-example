@@ -27,14 +27,7 @@ object AppLogging {
 
   val testLayer = Logging.console(
     logLevel = LogLevel.Info,
-    format = LogFormat.ColoredLogFormat()
+    format = LogFormat.SimpleConsoleLogFormat()
   ) >>> Logging.withRootLoggerName("my-component")
-
-//  val testLayer = Logging.console { (context, message) =>
-//    val customId = customLogAnnotation.render(
-//      context.get(customLogAnnotation)
-//    )
-//    logFormat.format(customId, message)
-//  }
 
 }
